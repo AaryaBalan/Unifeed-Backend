@@ -7,12 +7,18 @@ const youtube = require('./scrap/youtube');
 const reddit = require('./scrap/reddit');
 const redditSearch = require('./scrap/redditSearch');
 
+const dashboard = require('./dashboard')
+
 app.use(cors());
 app.use(express.json());
+
+let interest
 
 let ndtvNews = [];
 let ytContent = [];
 let redditContent = [];
+
+let dashboardNdtv
 
 async function main(searchText = 'trending') {
     try {
@@ -50,6 +56,16 @@ app.post('/search', async (req, res) => {
     await main(searchText);
     res.json({ success: true });
 });
+
+app.post('/sendInterest', async (req, res) => {
+    interest = req.body.data
+    console.log(interest)
+    dashboardNdtv = await dashboard(interest[0].keyword_clicks)
+})
+
+app.get('/dashboard/ndtv', (req, res) => {
+    res.json(dashboardNdtv)
+})
 
 const port = 7000;
 app.listen(port, () => {
