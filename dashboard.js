@@ -1,48 +1,39 @@
-const express = require('express');
-const app = express();
-
 const ndtv = require('./scrap/ndtv');
 const youtube = require('./scrap/youtube');
 const redditSearch = require('./scrap/redditSearch');
 
-async function Dashboard(interest) {
-    console.log("User Interests:", interest);
+async function Dashboard(interests) {
+    console.log("User Interests:", interests);
 
-    let dashboardNews = [];
-    let dashboardYoutube = [];
-    let dashboardReddit = [];
+    let dashboardData = {};
 
-    for (const key in interest) {
+    for (const interest of interests) {
         try {
-            console.log(`Fetching for: ${key}`);
+            console.log(`Fetching data for interest: ${interest}`);
 
             // Fetch 5 items per interest for each category
-            const newsFeed = await ndtv(key);
-            const youtubeFeed = await youtube(key);
-            const redditFeed = await redditSearch(key);
+            const newsFeed = await ndtv(interest);
+            const youtubeFeed = await youtube(interest);
+            const redditFeed = await redditSearch(interest);
 
-            if (Array.isArray(newsFeed)) {
-                dashboardNews.push(...newsFeed.slice(0, 5));
-            }
-            if (Array.isArray(youtubeFeed)) {
-                dashboardYoutube.push(...youtubeFeed.slice(0, 5));
-            }
-            if (Array.isArray(redditFeed)) {
-                dashboardReddit.push(...redditFeed.slice(0, 5));
-            }
+            console.log(`NDTV data for ${interest}:`, newsFeed);
+            console.log(`YouTube data for ${interest}:`, youtubeFeed);
+            console.log(`Reddit data for ${interest}:`, redditFeed);
 
+            dashboardData[interest] = [
+                ...(Array.isArray(newsFeed) ? newsFeed.slice(0, 5) : []),
+                ...(Array.isArray(youtubeFeed) ? youtubeFeed.slice(0, 5) : []),
+                ...(Array.isArray(redditFeed) ? redditFeed.slice(0, 5) : [])
+            ];
         } catch (error) {
-            console.error(`Error fetching data for ${key}:`, error);
+            console.error(`Error fetching data for ${interest}:`, error);
         }
     }
 
     console.log("✅ Dashboard Data Updated!");
+    console.log("Final Dashboard Data:", dashboardData);
 
-    return {
-        news: dashboardNews,
-        youtube: dashboardYoutube,
-        reddit: dashboardReddit
-    };
+    return dashboardData;
 }
 
 module.exports = Dashboard;
